@@ -12,6 +12,7 @@ class App(ctk.CTk):
         super().__init__()
         self.layout_config()
         self.appearance()
+        self.output_directory = '/home/gabriel/cotacao_moeda'  # Substitua pelo seu diretório de saída desejado
         self.todo_sistema()
 
     def layout_config(self):
@@ -100,8 +101,8 @@ class App(ctk.CTk):
 
     def submit(self):
         if hasattr(self, "file_path") and self.file_path:
-            ft.realizar_downloads_excel(self.file_path)
-            messagebox.showinfo("Concluido", "Cotação Extraida com Sucesso!") 
+            ft.realizar_downloads_excel(self.file_path, self.output_directory)
+            messagebox.showinfo("Concluído", "Cotação Extraída com Sucesso!") 
         else:
             messagebox.showerror(
                 "Erro",
