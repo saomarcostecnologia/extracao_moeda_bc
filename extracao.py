@@ -86,10 +86,23 @@ class FileTreatmentUseCase:
 
                         print(f'Arquivo {nome_arquivo} copiado para a pasta Silver.')
 
+                        # Chamando a função para tratar o cabeçalho do arquivo copiado para a pasta Silver
+                        FileTreatmentUseCase.alteracao_cabecalho(caminho_arquivo_silver)
+                        
+                        # Move o arquivo concatenado sem as tratativas do Silver para a pasta Gold
+                        caminho_arquivo_gold = os.path.join(diretorio_gold, nome_arquivo)
+                        if os.path.exists(caminho_arquivo_gold):
+                            shutil.move(caminho_arquivo_gold, caminho_arquivo_silver)
+                        else:
+                            print(f'O arquivo {nome_arquivo} não foi encontrado na pasta Gold.')
                     else:
                         print(f'Erro ao acessar o link {link}')
+
+                except requests.exceptions.RequestException as req_err:
+                    print(f'Erro ao fazer a solicitação GET para {link}: {str(req_err)}')
+
                 except Exception as e:
-                    print(f'Erro ao fazer o download do arquivo {link}: {str(e)}')
+                    print(f'Erro desconhecido: {str(e)}')
 
             # Concatena todos os DataFrames em um único DataFrame
             df_concatenado = pd.concat(dataframes, ignore_index=True)
@@ -99,12 +112,29 @@ class FileTreatmentUseCase:
             df_concatenado.to_csv(arquivo_concatenado, index=False)
             print(f'Dados concatenados salvos em {arquivo_concatenado} na pasta Silver.')
 
-            # Move o arquivo concatenado para a pasta Gold
-            caminho_arquivo_gold = os.path.join(diretorio_gold, 'dados_concatenados.csv')
-            shutil.move(arquivo_concatenado, caminho_arquivo_gold)
-            print(f'Arquivo de dados concatenados movido para a pasta Gold.')
+            # Concatenar todos os arquivos da pasta Silver em um único DataFrame
+            arquivos_silver = os.listdir(diretorio_silver)
+            dataframes_silver = []
+
+            for arquivo in arquivos_silver:
+                caminho_arquivo_silver = os.path.join(diretorio_silver, arquivo)
+                if arquivo.endswith('.csv'):
+                    df_silver = pd.read_csv(caminho_arquivo_silver, sep=";")
+                    dataframes_silver.append(df_silver)
+
+            # Concatenar os DataFrames da pasta Silver em um único DataFrame
+            df_concatenado_silver = pd.concat(dataframes_silver, ignore_index=True)
+
+            # Remove as 4 últimas colunas da direita
+            df_concatenado_silver = df_concatenado_silver.iloc[:, :-1]
+
+            # Salvar o DataFrame combinado em um arquivo CSV na pasta Gold
+            arquivo_concatenado_silver = os.path.join(diretorio_gold, 'dados_concatenados_silver.csv')
+            df_concatenado_silver.to_csv(arquivo_concatenado_silver, index=False)
+            print(f'Todos os arquivos da pasta Silver foram concatenados e salvos em {arquivo_concatenado_silver} na pasta Gold.')
 
             print('Todos os downloads foram concluídos.')
+
         except Exception as e:
             print(f'Erro ao processar o arquivo Excel: {str(e)}')
 
